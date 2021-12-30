@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+i
+#iMac added
+.DS_Store
+*.gz
+*.csv
+*.config
+*.usage2adw.py
