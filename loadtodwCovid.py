@@ -58,18 +58,19 @@ def set_arguments():
 ###############################################################################
 
 ###############################################################################
-def load_vaccine_doses(connection, file_path):
+def load_vaccine_doses(connection, vaccine_doses_url):
     file_num = 0
     row_num = 0
 
     try:
-        f = file_path
+        f = vaccine_doses_url
         fname = f.rsplit('/',1)[-1]
         print("   Loading file " + fname)
         file_id = fname[:-7]
         print(file_id)
-        with open(f,'rt') as f_in:
-            csv_read = csv.DictReader(f_in)
+        #request = urllib.request.urlopen(vaccine_doses_url)
+        with urllib.request.urlopen(vaccine_doses_url) as f_in:
+            csv_read = csv.DictReader(f_in.read().decode('utf-8').splitlines())
             # Load batch size for cx_oracle
             batch_size = 2000
             array_size = 500
@@ -249,7 +250,7 @@ def main_process():
     except Exception as err:
         raise Exception("\nError working with database - " + str(err))
     try:
-        load_vaccine_doses(connection,'work_dir/vaccine_doses.csv')
+        load_vaccine_doses(connection,vaccine_doses_url)
     except Exception as er:
         print("\nError raised - " + str(er) + "\n")
 
