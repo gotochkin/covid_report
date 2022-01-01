@@ -243,7 +243,7 @@ def load_cases_by_vacc_status(connection, cases_by_vacc_status_ont_url):
                 cases_unvac_rate_7ma = read_column_value('cases_unvac_rate_7ma',line)
                 cases_partial_vac_rate_7ma = read_column_value('cases_partial_vac_rate_7ma',line)
                 cases_full_vac_rate_7ma = read_column_value('cases_full_vac_rate_7ma',line)
-                print(date_u + " " + cases_partial_vac_rate_per100k)
+                #print(date_u + " " + cases_partial_vac_rate_per100k)
                 # create array
                 line_data = (
                     date_u,
@@ -319,6 +319,117 @@ def load_cases_by_vacc_status(connection, cases_by_vacc_status_ont_url):
     except Exception as er:
         print("\nError raised - " + str(er) + "\n")
 ###############################################################################
+# Load hospitalizations by vaccine status ontario
+###############################################################################
+def load_vac_status_hosp_icu_ont(connection, vac_status_hosp_icu_ont_url):
+    file_num = 0
+    row_num = 0
+
+    try:
+        f = vac_status_hosp_icu_ont_url
+        fname = f.rsplit('/',1)[-1]
+        print("   Loading file " + fname)
+        file_id = fname[:-7]
+        print(file_id)
+        #request = urllib.request.urlopen(vaccine_doses_url)
+        with urllib.request.urlopen(vac_status_hosp_icu_ont_url) as f_in:
+            csv_read = csv.DictReader(f_in.read().decode('utf-8').splitlines())
+            # Load batch size for cx_oracle
+            batch_size = 2000
+            array_size = 500
+            # Construct SQL
+            sqlstr = "INSERT INTO VAC_STATUS_HOSP_ICU_ONT_NEW ("
+            sqlstr +="DATE_U,"
+            sqlstr +="ICU_UNVAC,"
+            sqlstr +="ICU_PARTIAL_VAC,"
+            sqlstr +="ICU_FULL_VAC,"
+            sqlstr +="HOSPITALNONICU_UNVAC,"
+            sqlstr +="HOSPITALNONICU_PARTIAL_VAC,"
+            sqlstr +="HOSPITALNONICU_FULL_VAC"
+            sqlstr += ") VALUES ("
+            sqlstr += "to_date(:1,'YYYY-MM-DD'), :2, :3, :4, :5, :6, :7"
+            sqlstr += ") "
+            
+            # Open cursor
+            #cursor = cx_Oracle.Cursor(connection)
+            cursor = connection.cursor()
+            #truncate table VACCINE_DOSES_ONT_NEW
+            sqltrun = "truncate table VAC_STATUS_HOSP_ICU_ONT_NEW"
+            cursor.execute(sqltrun)
+            # Set array size
+            cursor.setinputsizes(None, array_size)
+
+            ldata = []
+            for line in csv_read:
+                #load columns to variables 
+                date_u = read_column_value('date', line)
+                icu_unvac = read_column_value('icu_unvac',line)
+                icu_partial_vac = read_column_value('icu_partial_vac',line)
+                icu_full_vac = read_column_value('icu_full_vac',line)
+                hospitalnonicu_unvac = read_column_value('hospitalnonicu_unvac',line)
+                hospitalnonicu_partial_vac = read_column_value('hospitalnonicu_partial_vac',line)
+                hospitalnonicu_full_vac = read_column_value('hospitalnonicu_full_vac',line)
+                #print(date_u + " " + icu_unvac)
+                # create array
+                line_data = (
+                    date_u,
+                    icu_unvac,
+                    icu_partial_vac,
+                    icu_full_vac,
+                    hospitalnonicu_unvac,
+                    hospitalnonicu_partial_vac,
+                    hospitalnonicu_full_vac
+                )
+                ldata.append(line_data)
+                row_num += 1
+
+                if len(ldata) % batch_size == 0:
+                    cursor.executemany(sqlstr, ldata)
+                    ldata = []
+
+            if ldata:
+                cursor.executemany(sqlstr, ldata)
+            connection.commit()
+            sqlstr = "MERGE "
+            sqlstr += "INTO "
+            sqlstr += "VAC_STATUS_HOSP_ICU_ONT o "
+            sqlstr += "using VAC_STATUS_HOSP_ICU_ONT_NEW n "
+            sqlstr += "on (n.DATE_U=o.DATE_U) "
+            sqlstr += "WHEN MATCHED THEN "
+            sqlstr += "UPDATE SET "
+            sqlstr += "o.ICU_UNVAC=n.ICU_UNVAC,"
+            sqlstr += "o.ICU_PARTIAL_VAC=n.ICU_PARTIAL_VAC,"
+            sqlstr += "o.ICU_FULL_VAC=n.ICU_FULL_VAC,"
+            sqlstr += "o.HOSPITALNONICU_UNVAC=n.HOSPITALNONICU_UNVAC,"
+            sqlstr += "o.HOSPITALNONICU_PARTIAL_VAC=n.HOSPITALNONICU_PARTIAL_VAC,"
+            sqlstr += "o.HOSPITALNONICU_FULL_VAC=n.HOSPITALNONICU_FULL_VAC "
+            sqlstr += "WHEN NOT MATCHED THEN INSERT ("
+            sqlstr +="DATE_U,"
+            sqlstr +="ICU_UNVAC,"
+            sqlstr +="ICU_PARTIAL_VAC,"
+            sqlstr +="ICU_FULL_VAC,"
+            sqlstr +="HOSPITALNONICU_UNVAC,"
+            sqlstr +="HOSPITALNONICU_PARTIAL_VAC,"
+            sqlstr +="HOSPITALNONICU_FULL_VAC"
+            sqlstr += ") VALUES ("
+            sqlstr += "n.DATE_U,"
+            sqlstr += "n.ICU_UNVAC,"
+            sqlstr += "n.ICU_PARTIAL_VAC,"
+            sqlstr += "n.ICU_FULL_VAC,"
+            sqlstr += "n.HOSPITALNONICU_UNVAC,"
+            sqlstr += "n.HOSPITALNONICU_PARTIAL_VAC,"
+            sqlstr += "n.HOSPITALNONICU_FULL_VAC"
+            sqlstr += ")"
+            #print(sqlstr)
+            cursor.execute(sqlstr)
+            connection.commit()
+
+            cursor.close()
+            print("   Downloaded and merged report " + fname + " - " + str(row_num) + " Rows Inserted")
+
+    except Exception as er:
+        print("\nError raised - " + str(er) + "\n")
+###############################################################################
 # Read columns values
 ###############################################################################
 def read_column_value(col, arr):
@@ -365,6 +476,7 @@ def main_process():
         print(certifi.where())
         vaccine_doses_url='https://data.ontario.ca/dataset/752ce2b7-c15a-4965-a3dc-397bf405e7cc/resource/8a89caa9-511c-4568-af89-7f2174b4378c/download/vaccine_doses.csv'
         cases_by_vacc_status_ont_url='https://data.ontario.ca/dataset/752ce2b7-c15a-4965-a3dc-397bf405e7cc/resource/eed63cf2-83dd-4598-b337-b288c0a89a16/download/cases_by_vac_status.csv'
+        vac_status_hosp_icu_ont_url='https://data.ontario.ca/dataset/752ce2b7-c15a-4965-a3dc-397bf405e7cc/resource/274b819c-5d69-4539-a4db-f2950794138c/download/vac_status_hosp_icu.csv'
         #try:
         #    urllib.request.urlretrieve(vaccine_doses_url, 'work_dir/vaccine_doses.csv')
         #except urllib.error.HTTPError as ex:
@@ -388,6 +500,7 @@ def main_process():
     try:
         load_vaccine_doses(connection,vaccine_doses_url)
         load_cases_by_vacc_status(connection,cases_by_vacc_status_ont_url)
+        load_vac_status_hosp_icu_ont(connection,vac_status_hosp_icu_ont_url)
     except Exception as er:
         print("\nError raised - " + str(er) + "\n")
 
