@@ -133,4 +133,4 @@ i
 *.gz
 *.csv
 *.config
-*.usage2adw.py
+usage2adw.py

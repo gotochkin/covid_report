@@ -56,7 +56,7 @@ def set_arguments():
 ###############################################################################
 # Load config
 ###############################################################################
-
+# Load vaccine doses distributed ontario
 ###############################################################################
 def load_vaccine_doses(connection, vaccine_doses_url):
     file_num = 0
@@ -184,6 +184,140 @@ def load_vaccine_doses(connection, vaccine_doses_url):
     except Exception as er:
         print("\nError raised - " + str(er) + "\n")
 ###############################################################################
+# Load Cases by vaccination status Ontario
+###############################################################################
+def load_cases_by_vacc_status(connection, cases_by_vacc_status_ont_url):
+    file_num = 0
+    row_num = 0
+
+    try:
+        f = cases_by_vacc_status_ont_url
+        fname = f.rsplit('/',1)[-1]
+        print("   Loading file " + fname)
+        file_id = fname[:-7]
+        print(file_id)
+        
+        with urllib.request.urlopen(cases_by_vacc_status_ont_url) as f_in:
+            csv_read = csv.DictReader(f_in.read().decode('ascii').splitlines())
+            # Load batch size for cx_oracle
+            batch_size = 2000
+            array_size = 500
+            # Construct SQL
+            sqlstr = "INSERT INTO CASES_BY_VACC_STATUS_ONT_NEW ("
+            sqlstr += "DATE_U,"
+            sqlstr += "COVID19_CASES_UNVAC,"
+            sqlstr += "COVID19_CASES_PARTIAL_VAC,"
+            sqlstr += "COVID19_CASES_FULL_VAC,"
+            sqlstr += "COVID19_CASES_VAC_UNKNOWN,"
+            sqlstr += "CASES_UNVAC_RATE_PER100K,"
+            sqlstr += "CASES_PARTIAL_VAC_RATE_PER100K,"
+            sqlstr += "CASES_FULL_VAC_RATE_PER100K,"
+            sqlstr += "CASES_UNVAC_RATE_7MA,"
+            sqlstr += "CASES_PARTIAL_VAC_RATE_7MA,"
+            sqlstr += "CASES_FULL_VAC_RATE_7MA"
+            sqlstr += ") VALUES ("
+            sqlstr += "to_date(:1,'YYYY-MM-DD'), :2, :3, :4, :5, :6, :7, :8, :9, :10, :11"
+            sqlstr += ") "
+            
+            # Open cursor
+            #cursor = cx_Oracle.Cursor(connection)
+            cursor = connection.cursor()
+            #truncate table VACCINE_DOSES_ONT_NEW
+            sqltrun = "truncate table CASES_BY_VACC_STATUS_ONT_NEW"
+            cursor.execute(sqltrun)
+            # Set array size
+            cursor.setinputsizes(None, array_size)
+
+            ldata = []
+            for line in csv_read:
+                #load columns to variables 
+                date_u = read_column_value('Date', line)
+                covid19_cases_unvac = read_column_value('covid19_cases_unvac',line)
+                covid19_cases_partial_vac = read_column_value('covid19_cases_partial_vac',line)
+                covid19_cases_full_vac = read_column_value('covid19_cases_full_vac',line)
+                covid19_cases_vac_unknown = read_column_value('covid19_cases_vac_unknown',line)
+                cases_unvac_rate_per100k = read_column_value('cases_unvac_rate_per100K',line)
+                cases_partial_vac_rate_per100k = read_column_value('cases_partial_vac_rate_per100K',line)
+                cases_full_vac_rate_per100k = read_column_value('cases_full_vac_rate_per100K',line)
+                cases_unvac_rate_7ma = read_column_value('cases_unvac_rate_7ma',line)
+                cases_partial_vac_rate_7ma = read_column_value('cases_partial_vac_rate_7ma',line)
+                cases_full_vac_rate_7ma = read_column_value('cases_full_vac_rate_7ma',line)
+                print(date_u + " " + cases_partial_vac_rate_per100k)
+                # create array
+                line_data = (
+                    date_u,
+                    covid19_cases_unvac,
+                    covid19_cases_partial_vac,
+                    covid19_cases_full_vac,
+                    covid19_cases_vac_unknown,
+                    cases_unvac_rate_per100k,
+                    cases_partial_vac_rate_per100k,
+                    cases_full_vac_rate_per100k,
+                    cases_unvac_rate_7ma,
+                    cases_partial_vac_rate_7ma,
+                    cases_full_vac_rate_7ma
+                )
+                ldata.append(line_data)
+                row_num += 1
+
+                if len(ldata) % batch_size == 0:
+                    cursor.executemany(sqlstr, ldata)
+                    ldata = []
+
+            if ldata:
+                cursor.executemany(sqlstr, ldata)
+            connection.commit()
+            sqlstr = "merge "
+            sqlstr += "into "
+            sqlstr += "cases_by_vacc_status_ont o "
+            sqlstr += "using cases_by_vacc_status_ont_new n "
+            sqlstr += "on (n.DATE_U=o.DATE_U) "
+            sqlstr += "when matched then "
+            sqlstr += "update set "
+            sqlstr += "o.COVID19_CASES_UNVAC=n.COVID19_CASES_UNVAC,"
+            sqlstr += "o.COVID19_CASES_PARTIAL_VAC=n.COVID19_CASES_PARTIAL_VAC,"
+            sqlstr += "o.COVID19_CASES_FULL_VAC=n.COVID19_CASES_FULL_VAC,"
+            sqlstr += "o.COVID19_CASES_VAC_UNKNOWN=n.COVID19_CASES_VAC_UNKNOWN,"
+            sqlstr += "o.CASES_UNVAC_RATE_PER100K=n.CASES_UNVAC_RATE_PER100K,"
+            sqlstr += "o.CASES_PARTIAL_VAC_RATE_PER100K=n.CASES_PARTIAL_VAC_RATE_PER100K,"
+            sqlstr += "o.CASES_FULL_VAC_RATE_PER100K=n.CASES_FULL_VAC_RATE_PER100K,"
+            sqlstr += "o.CASES_UNVAC_RATE_7MA=n.CASES_UNVAC_RATE_7MA,"
+            sqlstr += "o.CASES_PARTIAL_VAC_RATE_7MA=n.CASES_PARTIAL_VAC_RATE_7MA,"
+            sqlstr += "o.CASES_FULL_VAC_RATE_7MA=n.CASES_FULL_VAC_RATE_7MA "
+            sqlstr += "when not matched then insert "
+            sqlstr += "(DATE_U,"
+            sqlstr += "COVID19_CASES_UNVAC,"
+            sqlstr += "COVID19_CASES_PARTIAL_VAC,"
+            sqlstr += "COVID19_CASES_FULL_VAC,"
+            sqlstr += "COVID19_CASES_VAC_UNKNOWN,"
+            sqlstr += "CASES_UNVAC_RATE_PER100K,"
+            sqlstr += "CASES_PARTIAL_VAC_RATE_PER100K,"
+            sqlstr += "CASES_FULL_VAC_RATE_PER100K,"
+            sqlstr += "CASES_UNVAC_RATE_7MA,"
+            sqlstr += "CASES_PARTIAL_VAC_RATE_7MA,"
+            sqlstr += "CASES_FULL_VAC_RATE_7MA) "
+            sqlstr += "values "
+            sqlstr += "(n.DATE_U,"
+            sqlstr += "n.COVID19_CASES_UNVAC,"
+            sqlstr += "n.COVID19_CASES_PARTIAL_VAC,"
+            sqlstr += "n.COVID19_CASES_FULL_VAC,"
+            sqlstr += "n.COVID19_CASES_VAC_UNKNOWN,"
+            sqlstr += "n.CASES_UNVAC_RATE_PER100K,"
+            sqlstr += "n.CASES_PARTIAL_VAC_RATE_PER100K,"
+            sqlstr += "n.CASES_FULL_VAC_RATE_PER100K,"
+            sqlstr += "n.CASES_UNVAC_RATE_7MA,"
+            sqlstr += "n.CASES_PARTIAL_VAC_RATE_7MA,"
+            sqlstr += "n.CASES_FULL_VAC_RATE_7MA)"
+            #print(sqlstr)
+            cursor.execute(sqlstr)
+            connection.commit()
+
+            cursor.close()
+            print("   Downloaded and merged report " + fname + " - " + str(row_num) + " Rows Inserted")
+
+    except Exception as er:
+        print("\nError raised - " + str(er) + "\n")
+###############################################################################
 # Read columns values
 ###############################################################################
 def read_column_value(col, arr):
@@ -229,6 +363,7 @@ def main_process():
         #load_cost_file_gz("/Users/otochkin/Downloads/reports_cost-csv_0001000000190535.csv.gz")
         print(certifi.where())
         vaccine_doses_url='https://data.ontario.ca/dataset/752ce2b7-c15a-4965-a3dc-397bf405e7cc/resource/8a89caa9-511c-4568-af89-7f2174b4378c/download/vaccine_doses.csv'
+        cases_by_vacc_status_ont_url='https://data.ontario.ca/dataset/752ce2b7-c15a-4965-a3dc-397bf405e7cc/resource/eed63cf2-83dd-4598-b337-b288c0a89a16/download/cases_by_vac_status.csv'
         #try:
         #    urllib.request.urlretrieve(vaccine_doses_url, 'work_dir/vaccine_doses.csv')
         #except urllib.error.HTTPError as ex:
@@ -251,6 +386,7 @@ def main_process():
         raise Exception("\nError working with database - " + str(err))
     try:
         load_vaccine_doses(connection,vaccine_doses_url)
+        load_cases_by_vacc_status(connection,cases_by_vacc_status_ont_url)
     except Exception as er:
         print("\nError raised - " + str(er) + "\n")
 
