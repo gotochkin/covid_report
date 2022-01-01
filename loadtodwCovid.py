@@ -50,6 +50,7 @@ def set_arguments():
     args.add_argument('-dbn', default="", dest='dbname', help='ADB Name')
     args.add_argument('-dbu', default="", dest='dbuser', help='ADB User')
     args.add_argument('-dbp', default="", dest='dbpass', help='ADB Password')
+    args.add_argument('-ldir', default="", dest='ldir', help='OCI client libraries')
 
     res = args.parse_args()
     return res
@@ -374,7 +375,7 @@ def main_process():
     connection = None
     try:
         print("\nConnecting to database " + cli.dbname)
-        cx_Oracle.init_oracle_client(lib_dir="/Users/otochkin/Documents/instantclient_19_8")
+        cx_Oracle.init_oracle_client(lib_dir=cli.ldir)
         connection = cx_Oracle.connect(dsn=cli.dbname, user=cli.dbuser, password=cli.dbpass, encoding="UTF-8", nencoding="UTF-8")
         cursor = connection.cursor()
         print("   Connected")
