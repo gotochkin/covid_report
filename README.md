@@ -14,9 +14,11 @@ The data are presented "as is" and cannot be used for any official refernces.
 The rate of hospitalization calculated using population projection and on data from vaccination by at least two doses.
 
 The loadtodwCovid.py requires Oracle instant client libraries, correct TNS_ADMIN defined location and four arguments:
--dbn THS name for the connection. Usually you can find it in tnsnames.ora after you unpack the wallet zip file
--dbu the Oracle schema(user) in the ATP
--dbp the password for the Oracle user
+* -dbn THS name for the connection. Usually you can find it in tnsnames.ora after you unpack the wallet zip file
+* -dbu the Oracle schema(user) in the ATP
+* -dbp the password for the Oracle user
 
 Example:
+```
 python3 loadtodwCovid.py -dbn atp01_tp -dbu covid -dbp Password01 -ldir /u01/app/oracle/instantclient_19_8
+```
