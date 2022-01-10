@@ -28,15 +28,15 @@ prompt APPLICATION 103 - COVID_ONTARIO
 -- Application Export:
 --   Application:     103
 --   Name:            COVID_ONTARIO
---   Date and Time:   14:25 Sunday January 2, 2022
+--   Date and Time:   14:23 Monday January 10, 2022
 --   Exported By:     COVID
 --   Flashback:       0
 --   Export Type:     Application Export
 --     Pages:                     19
 --       Items:                   26
 --       Processes:               14
---       Regions:                 54
---       Buttons:                 27
+--       Regions:                 55
+--       Buttons:                 28
 --       Dynamic Actions:         12
 --     Shared Components:
 --       Logic:
@@ -119,7 +119,7 @@ wwv_flow_api.create_flow(
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'COVID_ONTARIO'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20220102142428'
+,p_last_upd_yyyymmddhh24miss=>'20220110140856'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>3
 ,p_ui_type_name => null
@@ -11659,7 +11659,7 @@ wwv_flow_api.create_page(
 ,p_page_template_options=>'#DEFAULT#'
 ,p_page_is_public_y_n=>'Y'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20220102135402'
+,p_last_upd_yyyymmddhh24miss=>'20220110140717'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(16664075427933895)
@@ -12357,6 +12357,135 @@ wwv_flow_api.create_jet_chart_axis(
 ,p_minor_tick_rendered=>'off'
 ,p_tick_label_rendered=>'on'
 );
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(16822816639692110)
+,p_plug_name=>'Hospitalizations_all'
+,p_parent_plug_id=>wwv_flow_api.id(16793634329977833)
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_escape_on_http_output=>'Y'
+,p_plug_template=>wwv_flow_api.id(16561699356933253)
+,p_plug_display_sequence=>30
+,p_plug_display_point=>'BODY'
+,p_plug_source_type=>'NATIVE_JET_CHART'
+,p_plug_query_num_rows=>15
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_jet_chart(
+ p_id=>wwv_flow_api.id(16822986401692111)
+,p_region_id=>wwv_flow_api.id(16822816639692110)
+,p_chart_type=>'line'
+,p_height=>'400'
+,p_animation_on_display=>'auto'
+,p_animation_on_data_change=>'auto'
+,p_orientation=>'vertical'
+,p_data_cursor=>'auto'
+,p_data_cursor_behavior=>'auto'
+,p_hide_and_show_behavior=>'withRescale'
+,p_hover_behavior=>'dim'
+,p_stack=>'off'
+,p_connect_nulls=>'Y'
+,p_sorting=>'label-asc'
+,p_fill_multi_series_gaps=>true
+,p_zoom_and_scroll=>'off'
+,p_tooltip_rendered=>'Y'
+,p_show_series_name=>true
+,p_show_group_name=>true
+,p_show_value=>true
+,p_legend_rendered=>'on'
+,p_legend_position=>'auto'
+,p_time_axis_type=>'mixedFrequency'
+);
+wwv_flow_api.create_jet_chart_series(
+ p_id=>wwv_flow_api.id(16823013596692112)
+,p_chart_id=>wwv_flow_api.id(16822986401692111)
+,p_seq=>10
+,p_name=>'ICU_all'
+,p_data_source_type=>'SQL'
+,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT date_u,',
+'       (icu_unvac + ',
+'       icu_partial_vac + ',
+'       icu_full_vac) icu_all,',
+'       (hospitalnonicu_unvac + ',
+'       hospitalnonicu_partial_vac + ',
+'       hospitalnonicu_full_vac) hospitalizations_all',
+'FROM vac_status_hosp_icu_ont',
+'order by date_u desc'))
+,p_items_value_column_name=>'ICU_ALL'
+,p_items_label_column_name=>'DATE_U'
+,p_line_style=>'solid'
+,p_line_type=>'auto'
+,p_marker_rendered=>'auto'
+,p_marker_shape=>'auto'
+,p_assigned_to_y2=>'off'
+,p_items_label_rendered=>false
+);
+wwv_flow_api.create_jet_chart_series(
+ p_id=>wwv_flow_api.id(16823106001692113)
+,p_chart_id=>wwv_flow_api.id(16822986401692111)
+,p_seq=>20
+,p_name=>'Hospitalizations_all'
+,p_data_source_type=>'SQL'
+,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT date_u,',
+'       (icu_unvac + ',
+'       icu_partial_vac + ',
+'       icu_full_vac) icu_all,',
+'       (hospitalnonicu_unvac + ',
+'       hospitalnonicu_partial_vac + ',
+'       hospitalnonicu_full_vac) hospitalizations_all',
+'FROM vac_status_hosp_icu_ont',
+'order by date_u desc'))
+,p_items_value_column_name=>'HOSPITALIZATIONS_ALL'
+,p_items_label_column_name=>'DATE_U'
+,p_line_style=>'solid'
+,p_line_type=>'auto'
+,p_marker_rendered=>'auto'
+,p_marker_shape=>'auto'
+,p_assigned_to_y2=>'off'
+,p_items_label_rendered=>false
+);
+wwv_flow_api.create_jet_chart_axis(
+ p_id=>wwv_flow_api.id(16823260175692114)
+,p_chart_id=>wwv_flow_api.id(16822986401692111)
+,p_axis=>'x'
+,p_is_rendered=>'on'
+,p_format_scaling=>'auto'
+,p_scaling=>'linear'
+,p_baseline_scaling=>'zero'
+,p_major_tick_rendered=>'on'
+,p_minor_tick_rendered=>'off'
+,p_tick_label_rendered=>'on'
+,p_tick_label_rotation=>'auto'
+,p_tick_label_position=>'outside'
+);
+wwv_flow_api.create_jet_chart_axis(
+ p_id=>wwv_flow_api.id(16823327641692115)
+,p_chart_id=>wwv_flow_api.id(16822986401692111)
+,p_axis=>'y'
+,p_is_rendered=>'on'
+,p_format_type=>'decimal'
+,p_decimal_places=>0
+,p_format_scaling=>'none'
+,p_scaling=>'linear'
+,p_baseline_scaling=>'zero'
+,p_position=>'auto'
+,p_major_tick_rendered=>'on'
+,p_minor_tick_rendered=>'off'
+,p_tick_label_rendered=>'on'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(16823421226692116)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(16664075427933895)
+,p_button_name=>'Refresh'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(16626842881933485)
+,p_button_image_alt=>'Refresh'
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_icon_css_classes=>'fa-refresh'
+);
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(16792369739977820)
 ,p_name=>'P1_SHOW_TABLE_CASE'
@@ -12377,7 +12506,7 @@ wwv_flow_api.create_page_item(
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(16794648923977843)
 ,p_name=>'P1_SHOW_TABLE_HOSP'
-,p_item_sequence=>10
+,p_item_sequence=>20
 ,p_item_plug_id=>wwv_flow_api.id(16793634329977833)
 ,p_prompt=>'Show Table Hosp'
 ,p_display_as=>'NATIVE_SELECT_LIST'
@@ -16590,9 +16719,10 @@ wwv_flow_api.create_page(
 ,p_page_template_options=>'#DEFAULT#'
 ,p_required_patch=>wwv_flow_api.id(16653335787933725)
 ,p_dialog_chained=>'N'
+,p_page_is_public_y_n=>'Y'
 ,p_protection_level=>'C'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20211225185756'
+,p_last_upd_yyyymmddhh24miss=>'20220110140856'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(16772490976938538)
