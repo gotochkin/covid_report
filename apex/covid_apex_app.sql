@@ -14,7 +14,7 @@ whenever sqlerror exit sql.sqlcode rollback
 begin
 wwv_flow_api.import_begin (
  p_version_yyyy_mm_dd=>'2021.04.15'
-,p_release=>'21.1.6'
+,p_release=>'21.1.7'
 ,p_default_workspace_id=>16401892004014782
 ,p_default_application_id=>103
 ,p_default_id_offset=>0
@@ -28,14 +28,14 @@ prompt APPLICATION 103 - COVID_ONTARIO
 -- Application Export:
 --   Application:     103
 --   Name:            COVID_ONTARIO
---   Date and Time:   14:23 Monday January 10, 2022
+--   Date and Time:   15:18 Saturday February 5, 2022
 --   Exported By:     COVID
 --   Flashback:       0
 --   Export Type:     Application Export
 --     Pages:                     19
 --       Items:                   26
 --       Processes:               14
---       Regions:                 55
+--       Regions:                 56
 --       Buttons:                 28
 --       Dynamic Actions:         12
 --     Shared Components:
@@ -68,7 +68,7 @@ prompt APPLICATION 103 - COVID_ONTARIO
 --       Reports:
 --       E-Mail:
 --     Supporting Objects:  Included
---   Version:         21.1.6
+--   Version:         21.1.7
 --   Instance ID:     9422288812362712
 --
 
@@ -106,8 +106,9 @@ wwv_flow_api.create_flow(
 ,p_app_builder_icon_name=>'app-icon.svg'
 ,p_proxy_server=>nvl(wwv_flow_application_install.get_proxy,'')
 ,p_no_proxy_domains=>nvl(wwv_flow_application_install.get_no_proxy_domains,'')
-,p_flow_version=>'Release 1.0'
+,p_flow_version=>'Release 1.0.3'
 ,p_flow_status=>'AVAILABLE_W_EDIT_LINK'
+,p_flow_unavailable_text=>'This application is currently unavailable at this time.'
 ,p_exact_substitutions_only=>'Y'
 ,p_browser_cache=>'N'
 ,p_browser_frame=>'D'
@@ -119,7 +120,7 @@ wwv_flow_api.create_flow(
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'COVID_ONTARIO'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20220110140856'
+,p_last_upd_yyyymmddhh24miss=>'20220129140349'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>3
 ,p_ui_type_name => null
@@ -11659,7 +11660,7 @@ wwv_flow_api.create_page(
 ,p_page_template_options=>'#DEFAULT#'
 ,p_page_is_public_y_n=>'Y'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20220110140717'
+,p_last_upd_yyyymmddhh24miss=>'20220129140349'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(16664075427933895)
@@ -11969,6 +11970,136 @@ wwv_flow_api.create_jet_chart_axis(
 wwv_flow_api.create_jet_chart_axis(
  p_id=>wwv_flow_api.id(16792285943977819)
 ,p_chart_id=>wwv_flow_api.id(16791998936977816)
+,p_axis=>'y'
+,p_is_rendered=>'on'
+,p_format_type=>'decimal'
+,p_decimal_places=>0
+,p_format_scaling=>'none'
+,p_scaling=>'linear'
+,p_baseline_scaling=>'zero'
+,p_position=>'auto'
+,p_major_tick_rendered=>'on'
+,p_minor_tick_rendered=>'off'
+,p_tick_label_rendered=>'on'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(16823505218692117)
+,p_plug_name=>'Vaccination'
+,p_parent_plug_id=>wwv_flow_api.id(16790480239977801)
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_escape_on_http_output=>'Y'
+,p_plug_template=>wwv_flow_api.id(16561699356933253)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_plug_source_type=>'NATIVE_JET_CHART'
+,p_plug_query_num_rows=>15
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_jet_chart(
+ p_id=>wwv_flow_api.id(16823663019692118)
+,p_region_id=>wwv_flow_api.id(16823505218692117)
+,p_chart_type=>'area'
+,p_height=>'400'
+,p_animation_on_display=>'auto'
+,p_animation_on_data_change=>'auto'
+,p_orientation=>'vertical'
+,p_data_cursor=>'auto'
+,p_data_cursor_behavior=>'auto'
+,p_hide_and_show_behavior=>'withRescale'
+,p_hover_behavior=>'dim'
+,p_stack=>'off'
+,p_connect_nulls=>'Y'
+,p_sorting=>'label-asc'
+,p_fill_multi_series_gaps=>true
+,p_zoom_and_scroll=>'off'
+,p_tooltip_rendered=>'Y'
+,p_show_series_name=>true
+,p_show_group_name=>true
+,p_show_value=>true
+,p_legend_rendered=>'on'
+,p_legend_position=>'auto'
+,p_time_axis_type=>'mixedFrequency'
+);
+wwv_flow_api.create_jet_chart_series(
+ p_id=>wwv_flow_api.id(16823737772692119)
+,p_chart_id=>wwv_flow_api.id(16823663019692118)
+,p_seq=>10
+,p_name=>'At least one dose'
+,p_data_source_type=>'SQL'
+,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT report_date,',
+'       total_individuals_at_least_one,',
+'       total_individuals_fully_vaccinated,',
+'       total_individuals_3doses',
+'FROM vaccine_doses_ont',
+'ORDER BY report_date DESC'))
+,p_items_value_column_name=>'TOTAL_INDIVIDUALS_AT_LEAST_ONE'
+,p_items_label_column_name=>'REPORT_DATE'
+,p_line_type=>'auto'
+,p_marker_rendered=>'auto'
+,p_marker_shape=>'auto'
+,p_assigned_to_y2=>'off'
+,p_items_label_rendered=>false
+);
+wwv_flow_api.create_jet_chart_series(
+ p_id=>wwv_flow_api.id(16823834743692120)
+,p_chart_id=>wwv_flow_api.id(16823663019692118)
+,p_seq=>20
+,p_name=>'Full'
+,p_data_source_type=>'SQL'
+,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT report_date,',
+'       total_individuals_at_least_one,',
+'       total_individuals_fully_vaccinated,',
+'       total_individuals_3doses',
+'FROM vaccine_doses_ont',
+'ORDER BY report_date DESC'))
+,p_items_value_column_name=>'TOTAL_INDIVIDUALS_FULLY_VACCINATED'
+,p_items_label_column_name=>'REPORT_DATE'
+,p_line_type=>'auto'
+,p_marker_rendered=>'auto'
+,p_marker_shape=>'auto'
+,p_assigned_to_y2=>'off'
+,p_items_label_rendered=>false
+);
+wwv_flow_api.create_jet_chart_series(
+ p_id=>wwv_flow_api.id(16824151866692123)
+,p_chart_id=>wwv_flow_api.id(16823663019692118)
+,p_seq=>30
+,p_name=>'Three-dose'
+,p_data_source_type=>'SQL'
+,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT report_date,',
+'       total_individuals_at_least_one,',
+'       total_individuals_fully_vaccinated,',
+'       total_individuals_3doses',
+'FROM vaccine_doses_ont',
+'ORDER BY report_date DESC'))
+,p_items_value_column_name=>'TOTAL_INDIVIDUALS_3DOSES'
+,p_items_label_column_name=>'REPORT_DATE'
+,p_line_type=>'auto'
+,p_marker_rendered=>'auto'
+,p_marker_shape=>'auto'
+,p_assigned_to_y2=>'off'
+,p_items_label_rendered=>false
+);
+wwv_flow_api.create_jet_chart_axis(
+ p_id=>wwv_flow_api.id(16823915280692121)
+,p_chart_id=>wwv_flow_api.id(16823663019692118)
+,p_axis=>'x'
+,p_is_rendered=>'on'
+,p_format_scaling=>'auto'
+,p_scaling=>'linear'
+,p_baseline_scaling=>'zero'
+,p_major_tick_rendered=>'on'
+,p_minor_tick_rendered=>'off'
+,p_tick_label_rendered=>'on'
+,p_tick_label_rotation=>'auto'
+,p_tick_label_position=>'outside'
+);
+wwv_flow_api.create_jet_chart_axis(
+ p_id=>wwv_flow_api.id(16824015446692122)
+,p_chart_id=>wwv_flow_api.id(16823663019692118)
 ,p_axis=>'y'
 ,p_is_rendered=>'on'
 ,p_format_type=>'decimal'
@@ -12520,6 +12651,9 @@ wwv_flow_api.create_page_item(
 ,p_attribute_01=>'NONE'
 ,p_attribute_02=>'N'
 );
+end;
+/
+begin
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(16793144520977828)
 ,p_name=>'CASES_REPORT'
@@ -16679,7 +16813,7 @@ wwv_flow_api.create_page(
 ,p_protection_level=>'C'
 ,p_help_text=>'All application help text can be accessed from this page. The links in the "Documentation" region give a much more in-depth explanation of the application''s features and functionality.'
 ,p_last_updated_by=>'COVID'
-,p_last_upd_yyyymmddhh24miss=>'20220102142428'
+,p_last_upd_yyyymmddhh24miss=>'20220129140107'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(16771790170938536)
@@ -16691,6 +16825,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
 '<h>Covid19 statistics for Ontario, Canada</h>',
 '<p>Copyright &copy; 2021 Gleb Otochkin</p>',
+'<p> #APP_VERSION# </p>',
 '<p><a href="https://blog.gleb.ca">blog: https://blog.gleb.ca</a></p>',
 '<p>Twitter: @sky_vst</p>',
 '<ul>',
